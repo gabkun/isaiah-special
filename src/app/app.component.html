@@ -1,4 +1,4 @@
 <main class="main">
-  <app-nav></app-nav>
+  <app-nav *ngIf="!isLoggedIn"></app-nav>
   <router-outlet></router-outlet>
 </main>

@@ -1,1 +1,124 @@
-<p>user-dashboard works!</p>
+<!-- Navigation Bar -->
+<nav class="bg-blue-700 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="text-2xl font-bold tracking-wide">TaskHive</div>
+      <div class="space-x-6 text-sm">
+        <span class="hover:underline cursor-pointer">Dashboard</span>
+        <span class="hover:underline cursor-pointer">Memos</span>
+        <span class="hover:underline cursor-pointer">Profile</span>
+        <span class="hover:underline cursor-pointer">Logout</span>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- User Dashboard Section -->
+  <div *ngIf="user" class="max-w-6xl mx-auto mt-10 p-8 bg-white border border-gray-200 rounded-2xl shadow-xl">
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">User Dashboard</h2>
+  
+    <!-- User Info -->
+    <div class="mb-8 space-y-1 text-gray-700">
+      <h3 class="text-2xl font-semibold">Welcome, {{ user.name }}</h3>
+
+    </div>
+  
+    <!-- Create Memo Button -->
+    <div class="text-center mb-10">
+      <button (click)="openCreateMemoModal()"
+        class="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-200">
+        Create Task
+      </button>
+    </div>
+  
+    <!-- Your Memos Section -->
+    <div class="bg-gray-50 p-6 rounded-xl border-t border-gray-200 shadow-inner">
+      <h3 class="text-2xl font-semibold text-gray-800 mb-4">Your Tasks</h3>
+  
+      <div *ngIf="memoFetchError" class="text-red-600 text-sm mb-2">{{ memoFetchError }}</div>
+      <div *ngIf="textMemos.length === 0 && !memoFetchError" class="text-gray-500 text-sm">No memos available.</div>
+  
+      <div *ngIf="textMemos.length > 0"
+        class="flex space-x-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4">
+        <div *ngFor="let memo of textMemos"
+          class="min-w-[300px] max-w-xs bg-white border border-gray-300 rounded-xl shadow-md p-4 snap-start flex-shrink-0 hover:shadow-lg transition duration-200">
+          <h4 class="text-lg font-bold text-blue-700 mb-2 truncate">{{ memo.title }}</h4>
+          <p class="text-sm text-gray-700 mb-2 line-clamp-3">{{ memo.description }}</p>
+          <p *ngIf="memo.additionalNotes" class="text-xs text-gray-500 mb-3">Additional Notes: {{ memo.additionalNotes }}</p>
+          <p *ngIf="memo.additionalNotes" class="text-xs text-gray-500 mb-3">Created: {{ memo.createdDate }}</p>
+  
+          <div *ngIf="memo.images?.length" class="mb-3">
+            <img [src]="'http://localhost:4500/' + memo.images[0]" alt="Memo Image"
+              class="w-full h-40 object-cover rounded-md shadow-sm">
+          </div>
+         
+          <div *ngIf="memo.memoType === '2'" class="text-sm text-gray-500">
+            Voice Memo: <a [href]="memo.audioUrl" target="_blank" class="text-blue-600 hover:underline">Listen</a>
+          </div>
+          <div class="flex justify-end space-x-2 mt-4">
+            <button  class="text-sm text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded">Edit</button>
+            <button  class="text-sm text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded">Delete</button>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading State -->
+  <div *ngIf="!user" class="text-center text-xl font-medium text-gray-600 mt-10">
+    <p>Loading...</p>
+  </div>
+  
+  <!-- Modal for Creating Memo -->
+  <div *ngIf="isCreateMemoModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
+      <h3 class="text-2xl font-semibold mb-6 text-gray-800">Create Task</h3>
+  
+      <form (submit)="createMemo($event)" enctype="multipart/form-data" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Title</label>
+          <input [(ngModel)]="memo.title" name="title" required type="text"
+            class="mt-1 w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200" />
+        </div>
+  
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Task Type</label>
+          <select [(ngModel)]="memo.memoType" name="memoType"
+            class="mt-1 w-full border border-gray-300 rounded-md p-2">
+            <option value="1">Text Memo</option>
+            <option value="2">Voice Memo</option>
+          </select>
+        </div>
+  
+        <div *ngIf="memo.memoType === '1'">
+          <label class="block text-sm font-medium text-gray-700">Description</label>
+          <textarea [(ngModel)]="memo.description" name="description" required
+            class="mt-1 w-full border border-gray-300 rounded-md p-2 resize-none focus:ring focus:ring-blue-200"></textarea>
+        </div>
+  
+        <div>
+          <label class="block text-sm font-medium text-gray-700">
+            {{ memo.memoType === '2' ? 'Upload Audio File' : 'Upload Images (Optional)' }}
+          </label>
+          <input type="file" (change)="onFileChange($event)" [multiple]="memo.memoType === '1'"
+            class="mt-1 block w-full text-sm text-gray-600" />
+        </div>
+  
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Additional Notes</label>
+          <textarea [(ngModel)]="memo.additionalNotes" name="additionalNotes"
+            class="mt-1 w-full border border-gray-300 rounded-md p-2 resize-none focus:ring focus:ring-blue-200"></textarea>
+        </div>
+  
+        <div *ngIf="memoError" class="text-red-600 text-sm">{{ memoError }}</div>
+        <div *ngIf="memoMessage" class="text-green-600 text-sm">{{ memoMessage }}</div>
+  
+        <div class="flex justify-end space-x-4 pt-4">
+          <button type="button" (click)="closeCreateMemoModal()"
+            class="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500">Cancel</button>
+          <button type="submit"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Submit Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
